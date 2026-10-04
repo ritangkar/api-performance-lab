@@ -1,0 +1,53 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: api-performance-lab
+
+  datasource:
+    url: jdbc:h2:file:./data/apiperf;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+    hikari:
+      # Pool sizing rationale (Little's Law / the widely-cited HikariCP formula
+      # connections = ((core_count * 2) + effective_spindle_count)):
+      # this is a small demo app on modest hardware, not a high-throughput
+      # production service, so the pool is intentionally small. A production
+      # commerce API on an 8-core box talking to a single fast SSD-backed
+      # Postgres instance would typically land around 10-20 connections, NOT
+      # hundreds — oversized pools often make throughput *worse* by causing
+      # excessive context switching and lock contention on the database side.
+      # See docs/design-decisions.md for the full reasoning and how to verify
+      # this empirically with the bundled benchmark under concurrent load.
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+        order_inserts: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+apiperf:
+  data:
+    order-count: 50000
+    product-count: 50000
+
+logging:
+  level:
+    root: INFO
+    com.ritangkar.apiperf: INFO
